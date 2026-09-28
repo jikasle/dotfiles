@@ -374,19 +374,6 @@ point reaches the beginning or end of the buffer, stop there."
 
 (global-set-key (kbd "M-+") 'rc/duplicate-line)
 
-;; (defun my/java-compile ()
-;;   "Compiles java classe from root."
-;;   (interactive)
-;;   (let ((default-directory (project-root (project-current t))))
-;;     (compile "javac *.java -d classes")))
-;; 
-;; (defun my/compile-java-hotkey ()
-;;   "Asigns F5 to compile java."
-;;   (local-set-key (kbd "<f5>") 'my/java-compile))
-;; 
-;; (add-hook 'java-mode-hook 'my/compile-java-hotkey)
-;; (add-hook 'java-ts-mode-hook 'my/compile-java-hotkey)
-
 ;; Config
 
 (repeat-mode t)
