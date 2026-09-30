@@ -284,6 +284,16 @@
 
 (use-package highlight-escape-sequences :ensure t :hook (prog-mode . hes-mode))
 
+(use-package
+ hungry-delete
+ :defer t
+ :init (global-hungry-delete-mode)
+ :config
+ (setq hungry-delete-join-reluctantly nil)
+ (setq-default hungry-delete-chars-to-skip " \t\f\v\n"))
+
+(delete-selection-mode 1)
+
 ;; Funcs
 
 
@@ -402,6 +412,9 @@ point reaches the beginning or end of the buffer, stop there."
          (mapcar
           #'substring-no-properties (cl-remove-if-not #'stringp kill-ring)))))
 (add-hook 'after-save-hook #'executable-make-buffer-file-executable-if-script-p)
+(add-hook
+ 'emacs-lisp-mode-hook
+ '(lambda () (local-set-key (kbd "C-c C-j") (quote eval-print-last-sexp))))
 
 ;; Bindings
 
