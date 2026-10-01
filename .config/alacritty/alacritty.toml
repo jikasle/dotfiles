@@ -20,3 +20,6 @@ style = "Italic"
 [font.bold_italic]
 family = "RobotoMono Nerd Font Mono"
 style = "Bold Italic"
+
+[keyboard]
+bindings = [{ key = "F11", action = "ToggleFullscreen" }]
