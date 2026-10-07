@@ -249,7 +249,7 @@
  :ensure t
  :config
  (setf (alist-get 'google-java-format apheleia-formatters)
-       '("google-java-format" "-"))
+       '("google-java-format" "--aosp" "-"))
 
  (setf (alist-get 'black apheleia-formatters)
        '("black"
@@ -293,6 +293,9 @@
  (setq-default hungry-delete-chars-to-skip " \t\f\v\n"))
 
 (delete-selection-mode 1)
+
+(use-package iedit :ensure t :bind (("M-i" . iedit-mode)))
+
 
 ;; Funcs
 
@@ -383,6 +386,69 @@ point reaches the beginning or end of the buffer, stop there."
     (forward-char column)))
 
 (global-set-key (kbd "M-+") 'rc/duplicate-line)
+
+(defun get-buffers-matching-mode (mode)
+  "Returns a list of buffers where their major-mode is equal to MODE."
+  (let ((buffer-mode-matches '()))
+    (dolist (buf (buffer-list))
+      (with-current-buffer buf
+        (when (eq mode major-mode)
+          (push buf buffer-mode-matches))))
+    buffer-mode-matches))
+
+
+(defun multi-occur-in-this-mode ()
+  "Show all lines matching REGEXP in buffers with this major mode."
+  (interactive)
+  (multi-occur
+   (get-buffers-matching-mode major-mode) (car (occur-read-primary-args))))
+
+(global-set-key (kbd "C-<f2>") 'multi-occur-in-this-mode)
+
+(defun my-occur-from-isearch ()
+  "Calls occur from within a isearch."
+  (interactive)
+  (let ((query
+         (if isearch-regexp
+             isearch-string
+           (regexp-quote isearch-string))))
+    (isearch-update-ring isearch-string isearch-regexp)
+    (let (search-nonincremental-instead)
+      (ignore-errors
+        (isearch-done t t)))
+    (occur query)))
+
+(defun my-consult-line-from-isearch ()
+  "Call `consult-line` with the search string from the last `isearch`."
+  (interactive)
+  (consult-line isearch-string))
+
+(define-key isearch-mode-map (kbd "C-c") 'my-consult-line-from-isearch)
+(define-key isearch-mode-map (kbd "C-o") 'my-occur-from-isearch)
+(define-key isearch-mode-map (kbd "C-d") 'isearch-forward-symbol-at-point)
+(define-key isearch-mode-map (kbd "C-q") 'isearch-query-replace-regexp)
+
+(defadvice isearch-mode
+    (around
+     isearch-mode-default-string
+     (forward &optional regexp op-fun recursive-edit word-p)
+     activate)
+  "Use active region as the initial serach term for isearch."
+  (if (and transient-mark-mode mark-active (not (eq (mark) (point))))
+      (progn
+        (isearch-update-ring (buffer-substring-no-properties (mark) (point)))
+        (deactivate-mark)
+        ad-do-it
+        (if (not forward)
+            (isearch-repeat-backward)
+          (goto-char (mark))
+          (isearch-repeat-forward)))
+    ad-do-it))
+
+(defun my-multi-occur-in-matching-buffers (regexp &optional allbufs)
+  "Show lines matching REGEXP in ALLBUFS."
+  (interactive (occur-read-primary-args))
+  (multi-occur-in-matching-buffers "." regexp allbufs))
 
 ;; Config
 
