@@ -148,7 +148,15 @@
  :hook
  ((elpaca-after-init . global-flycheck-mode)
   (elpaca-after-init . global-flycheck-annotate-mode))
- :config (global-flycheck-eglot-mode 1))
+ :config (global-flycheck-eglot-mode 1)
+ :bind
+ (:map
+  flycheck-mode-map
+  ("C-c ! l" .
+   (lambda ()
+     (interactive)
+     (flycheck-list-errors)
+     (switch-to-buffer-other-window "*Flycheck errors*")))))
 
 (use-package
  modus-nordic-night-theme
@@ -423,10 +431,30 @@ point reaches the beginning or end of the buffer, stop there."
   (interactive)
   (consult-line isearch-string))
 
+(defun my-multi-occur-in-matching-buffers (regexp &optional allbufs)
+  "Show lines matching REGEXP in ALLBUFS."
+  (interactive (occur-read-primary-args))
+  (multi-occur-in-matching-buffers "." regexp allbufs))
+
+(defun my-multi-occur-in-matching-buffers-from-isearch (&optional allbufs)
+  "Show lines matching the current isearch REGEXP (or string) in ALLBUFS."
+  (interactive "P")
+  (let ((query
+         (if isearch-regexp
+             isearch-string
+           (regexp-quote isearch-string))))
+    (isearch-update-ring isearch-string isearch-regexp)
+    (let (search-nonincremental-instead)
+      (ignore-errors
+        (isearch-done t t)))
+    (multi-occur-in-matching-buffers "." query allbufs)))
+
 (define-key isearch-mode-map (kbd "C-c") 'my-consult-line-from-isearch)
 (define-key isearch-mode-map (kbd "C-o") 'my-occur-from-isearch)
 (define-key isearch-mode-map (kbd "C-d") 'isearch-forward-symbol-at-point)
 (define-key isearch-mode-map (kbd "C-q") 'isearch-query-replace-regexp)
+(define-key
+ isearch-mode-map (kbd "M-o") 'my-multi-occur-in-matching-buffers-from-isearch)
 
 (defadvice isearch-mode
     (around
@@ -445,10 +473,55 @@ point reaches the beginning or end of the buffer, stop there."
           (isearch-repeat-forward)))
     ad-do-it))
 
-(defun my-multi-occur-in-matching-buffers (regexp &optional allbufs)
-  "Show lines matching REGEXP in ALLBUFS."
-  (interactive (occur-read-primary-args))
-  (multi-occur-in-matching-buffers "." regexp allbufs))
+(defun sacha-copy-symbol-if-region-is-inactive (beg end &optional region)
+  "Wrap around `kill-ring-save' from BEG to END  in REGION so that we kill a single line."
+  (interactive (list (mark) (point) 'region))
+  (if (region-active-p)
+      (kill-ring-save beg end region)
+    (let ((bounds
+           (or (bounds-of-thing-at-point 'symbol)
+               (bounds-of-thing-at-point 'word))))
+      (kill-new (filter-buffer-substring (car bounds) (cdr bounds))))))
+
+
+(keymap-global-set "M-w" #'sacha-copy-symbol-if-region-is-inactive)
+
+(defun rb/generate-uuid ()
+  "Insert a generated UUID at point."
+  (interactive)
+  (insert (downcase (string-trim (shell-command-to-string "uuidgen")))))
+
+(defun rb/toggle-true-false ()
+  "Toggles the word under the cursor between 'true' and 'false', preserving case."
+  (interactive)
+  (let ((bounds (bounds-of-thing-at-point 'word)))
+    (when bounds
+      (let* ((start (car bounds))
+             (end (cdr bounds))
+             (word (buffer-substring-no-properties start end)))
+        (cond
+         ((string-equal word "true")
+          (delete-region start end)
+          (insert "false"))
+         ((string-equal word "false")
+          (delete-region start end)
+          (insert "true"))
+
+         ((string-equal word "TRUE")
+          (delete-region start end)
+          (insert "FALSE"))
+         ((string-equal word "FALSE")
+          (delete-region start end)
+          (insert "TRUE"))
+
+         ((string-equal word "True")
+          (delete-region start end)
+          (insert "False"))
+         ((string-equal word "False")
+          (delete-region start end)
+          (insert "True")))))))
+
+(global-set-key (kbd "C-c t b") 'rb/toggle-true-false)
 
 ;; Config
 
@@ -491,5 +564,25 @@ point reaches the beginning or end of the buffer, stop there."
 (global-set-key (kbd "<C-S-down>") 'buf-move-down)
 (global-set-key (kbd "<C-S-left>") 'buf-move-left)
 (global-set-key (kbd "<C-S-right>") 'buf-move-right)
+
+;; Misc
+
+(setq initial-scratch-message
+      (format
+       ";; Welcome to
+;;
+;;  ███████╗███╗   ███╗ █████╗  ██████╗███████╗
+;;  ██╔════╝████╗ ████║██╔══██╗██╔════╝██╔════╝
+;;  █████╗  ██╔████╔██║███████║██║     ███████╗
+;;  ██╔══╝  ██║╚██╔╝██║██╔══██║██║     ╚════██║
+;;  ███████╗██║ ╚═╝ ██║██║  ██║╚██████╗███████║
+;;  ╚══════╝╚═╝     ╚═╝╚═╝  ╚═╝ ╚═════╝╚══════╝
+;;
+;;      Loading time : %s
+;;      Packages     : %d
+;;
+
+"
+       (emacs-init-time) (length package-activated-list)))
 
 ;;; post-init.el ends here
