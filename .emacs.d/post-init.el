@@ -396,6 +396,8 @@
 
 (add-hook 'post-command-hook #'my-change-cursor-color-when-can-expand)
 
+(use-package eros :hook (emacs-lisp-mode . eros-mode))
+
 ;; Funcs
 
 
