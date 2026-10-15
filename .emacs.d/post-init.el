@@ -321,6 +321,67 @@
 
 (use-package iedit :ensure t :bind (("M-i" . iedit-mode)))
 
+(use-package
+ yasnippet
+ :ensure t
+ :init (yas-global-mode 1)
+ :hook
+ ((after-init-hook . yas-reload-all) (prog-mode-hook . yas-minor-mode)))
+
+(use-package yasnippet-snippets :ensure t :after yasnippet)
+
+(defun yasnippet-can-fire-p (&optional field)
+  "Triggers when you can fire a snippet in FIELD."
+  (when (bound-and-true-p yas-minor-mode)
+    (setq yas--condition-cache-timestamp (current-time))
+    (let (templates-and-pos)
+      (unless (and yas-expand-only-for-last-commands
+                   (not
+                    (member last-command yas-expand-only-for-last-commands)))
+        (setq templates-and-pos
+              (if field
+                  (save-restriction
+                    (narrow-to-region
+                     (yas--field-start field) (yas--field-end field))
+                    (yas--templates-for-key-at-point))
+                (yas--templates-for-key-at-point))))
+      (and templates-and-pos (car templates-and-pos)))))
+
+(defun my-can-expand ()
+  "Return non-nil if right after an expandable thing."
+  (or (and (fboundp 'abbrev--before-point) (abbrev--before-point))
+      (yasnippet-can-fire-p)))
+
+(setq yasnippet-can-fire-cursor-color "#66cdaa")
+
+(defun my-get-default-cursor-color ()
+  "Returns current cursor color."
+  (if (display-graphic-p)
+      (face-attribute 'cursor :background nil t)
+    "#ffffff"))
+
+(defvar my-terminal-initial-cursor-color nil)
+(unless (display-graphic-p)
+  (setq my-terminal-initial-cursor-color (my-get-default-cursor-color)))
+
+(defun my-change-cursor-color-when-can-expand ()
+  "Changes the color of the cursor based on whether a snippet can fire (GUI and TTY)."
+  (let ((can-expand (my-can-expand)))
+    (if (display-graphic-p)
+        (set-cursor-color
+         (if can-expand
+             yasnippet-can-fire-cursor-color
+           (my-get-default-cursor-color)))
+
+      (let ((color-hex
+             (if can-expand
+                 yasnippet-can-fire-cursor-color
+               my-terminal-initial-cursor-color)))
+        (when color-hex
+          (send-string-to-terminal (format "\e]12;%s\a" color-hex)))))))
+
+(add-hook 'post-command-hook #'my-change-cursor-color-when-can-expand)
+
 ;; Funcs
 
 
