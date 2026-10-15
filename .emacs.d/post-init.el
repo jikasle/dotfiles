@@ -126,8 +126,6 @@
  (corfu-on-exact-match 'insert)
  (corfu-min-chars 1)
  (corfu-quit-at-boundary nil)
- (corfu-quit-no-match 'separator)
- (corfu-auto t)
  (corfu-auto-delay 0.2)
  (corfu-auto-trigger ".")
  (corfu-quit-no-match 'separator)
@@ -136,15 +134,25 @@
   (shell-mode . corfu-mode)
   (eshell-mode . corfu-mode)
   (emacs-lisp-mode . corfu-mode))
- :init (global-corfu-mode))
+ :init
+ (corfu-popupinfo-mode 1)
+ (setq corfu-popupinfo-delay '(0.2 . 0.1)))
 
 (use-package
  cape
  :bind ("C-c p" . cape-prefix-map)
  :init
- (add-hook 'completion-at-point-functions #'cape-dabbrev)
- (add-hook 'completion-at-point-functions #'cape-file)
- (add-hook 'completion-at-point-functions #'cape-elisp-block))
+ (defun my/combined-capfs ()
+   (setq-local completion-at-point-functions
+               (list
+                (cape-capf-super
+                 #'yasnippet-capf
+                 #'cape-file
+                 #'cape-dabbrev
+                 #'cape-elisp-block))))
+
+ (add-hook 'prog-mode-hook #'my/combined-capfs)
+ (add-hook 'emacs-lisp-mode-hook #'my/combined-capfs))
 
 (use-package
  marginalia
@@ -327,6 +335,12 @@
  :init (yas-global-mode 1)
  :hook
  ((after-init-hook . yas-reload-all) (prog-mode-hook . yas-minor-mode)))
+
+(use-package
+ yasnippet-capf
+ :ensure t
+ :after (yasnippet cape)
+ :init (add-to-list 'completion-at-point-functions #'yasnippet-capf))
 
 (use-package yasnippet-snippets :ensure t :after yasnippet)
 
@@ -632,6 +646,15 @@ point reaches the beginning or end of the buffer, stop there."
 (add-hook
  'emacs-lisp-mode-hook
  '(lambda () (local-set-key (kbd "C-c C-j") (quote eval-print-last-sexp))))
+
+(defun my/eglot-capf-with-yasnippet ()
+  "Configure Yasnippet CAPF with Eglot."
+  (setq-local completion-at-point-functions
+              (list
+               (cape-capf-super #'eglot-completion-at-point #'yasnippet-capf))))
+
+(with-eval-after-load 'eglot
+  (add-hook 'eglot-managed-mode-hook #'my/eglot-capf-with-yasnippet))
 
 ;; Bindings
 
