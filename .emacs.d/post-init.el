@@ -82,7 +82,24 @@
   xref-show-xrefs-function #'consult-xref
   xref-show-definitions-function #'consult-xref)
  :config
+ (defun consult-ripgrep-up-directory ()
+   "Command to restart the current `consult-ripgrep' search in the parent directory."
+   (interactive)
+   (let ((parent-dir
+          (file-name-directory (directory-file-name default-directory))))
+     (when parent-dir
+       (run-at-time 0 nil #'consult-ripgrep
+                    parent-dir
+                    (ignore-errors
+                      (buffer-substring-no-properties
+                       (1+ (minibuffer-prompt-end)) (point-max))))))
+   (minibuffer-quit-recursive-edit))
  (consult-customize
+  consult-ripgrep
+  :keymap
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "M-l") #'consult-ripgrep-up-directory)
+    map)
   consult-theme
   :preview-key
   '(:debounce 0.2 any)
@@ -304,7 +321,6 @@
 
 (use-package iedit :ensure t :bind (("M-i" . iedit-mode)))
 
-
 ;; Funcs
 
 
@@ -347,7 +363,6 @@ point reaches the beginning or end of the buffer, stop there."
   (interactive "^p")
   (setq arg (or arg 1))
 
-  ;; Move lines first
   (when (/= arg 1)
     (let ((line-move-visual nil))
       (forward-line (1- arg))))
@@ -525,6 +540,7 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; Config
 
+
 (repeat-mode t)
 (savehist-mode t)
 (global-auto-revert-mode t)
@@ -543,6 +559,7 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; Hooks
 
+
 (add-hook 'prog-mode-hook (lambda () (setq display-line-numbers 'relative)))
 (add-hook
  'savehist-save-hook
@@ -557,15 +574,16 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; Bindings
 
+
 (global-set-key (kbd "C-x t l") 'tab-recent)
 (global-set-key (kbd "M-k") 'kill-whole-line)
-
 (global-set-key (kbd "<C-S-up>") 'buf-move-up)
 (global-set-key (kbd "<C-S-down>") 'buf-move-down)
 (global-set-key (kbd "<C-S-left>") 'buf-move-left)
 (global-set-key (kbd "<C-S-right>") 'buf-move-right)
 
 ;; Misc
+
 
 (setq initial-scratch-message
       (format
@@ -579,7 +597,6 @@ point reaches the beginning or end of the buffer, stop there."
 ;;  ╚══════╝╚═╝     ╚═╝╚═╝  ╚═╝ ╚═════╝╚══════╝
 ;;
 ;;      Loading time : %s
-;;      Packages     : %d
 ;;
 
 "
