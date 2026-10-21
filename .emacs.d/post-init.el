@@ -413,7 +413,6 @@
   ("p" . mc/mark-previous-like-this)
   ("s" . mc/skip-to-next-like-this)))
 
-
 ;; Funcs
 
 
