@@ -398,6 +398,22 @@
 
 (use-package eros :hook (emacs-lisp-mode . eros-mode))
 
+(use-package
+ multiple-cursors
+ :ensure t
+ :bind
+ (("C-c C-v l" . mc/edit-lines)
+  ("C-c C-v n" . mc/mark-next-like-this)
+  ("C-c C-v p" . mc/mark-previous-like-this)
+  ("C-c C-v a" . mc/mark-all-like-this)
+
+  :repeat-map
+  mc/repeat-map
+  ("n" . mc/mark-next-like-this)
+  ("p" . mc/mark-previous-like-this)
+  ("s" . mc/skip-to-next-like-this)))
+
+
 ;; Funcs
 
 

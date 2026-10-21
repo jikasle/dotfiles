@@ -14,6 +14,7 @@ if status is-interactive
 
     fish_add_path $HOME/.local/bin
     fish_add_path $HOME/Descargas/jdt-language-server-1.61.0-202609031315/bin
+    fish_add_path $HOME/Descargas/typst-x86_64-unknown-linux-musl
 
     # Aliases
 
