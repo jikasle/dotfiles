@@ -406,6 +406,7 @@
   ("C-c C-v n" . mc/mark-next-like-this)
   ("C-c C-v p" . mc/mark-previous-like-this)
   ("C-c C-v a" . mc/mark-all-like-this)
+  ("M--" . mc/mark-next-like-this)
 
   :repeat-map
   mc/repeat-map
