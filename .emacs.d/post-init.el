@@ -414,6 +414,17 @@
   ("p" . mc/mark-previous-like-this)
   ("s" . mc/skip-to-next-like-this)))
 
+(use-package
+ avy
+ :ensure t
+ :init (avy-setup-default)
+ :bind
+ (("M-g f" . avy-goto-line)
+  ("M-g w" . avy-goto-word-1)
+  ("M-g e" . avy-goto-word-0)
+  ("M-g ." . avy-goto-char)
+  ("M-g :" . avy-goto-char-2)))
+
 ;; Funcs
 
 
